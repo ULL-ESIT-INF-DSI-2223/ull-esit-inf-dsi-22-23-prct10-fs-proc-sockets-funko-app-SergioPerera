@@ -1,10 +1,10 @@
 import { access, constants, watch } from 'fs';
 
-const contenido_pila_llamadas: string[] = [];
-const registros_eventos_de_API: string[] = [];
-const contenido_cola_manejadores: string[] = [];
+export const contenido_pila_llamadas: string[] = [];
+export const registros_eventos_de_API: string[] = [];
+export const contenido_cola_manejadores: string[] = [];
 
-function printInfo() {
+export function printInfo() {
   console.log('Pila de llamadas:', contenido_pila_llamadas);
   console.log('Registros de eventos de API:', registros_eventos_de_API);
   console.log('Cola de manejadores:', contenido_cola_manejadores);
