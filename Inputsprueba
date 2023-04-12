@@ -1,1 +1,0 @@
-node dist/main.js add --user "pablo" --id 4 --name "Classic Sonic" --desc "The best Sonic Funko ever" --type "Pop!" --genre "Video Games" --franchise "Sonic" --number "23" --exclusive true --specialFeatures "fly" --price "200"
