@@ -1,0 +1,9 @@
+{
+  "entryPoints": [
+  "./src/ejercicios_clase/*",
+  "./src/funko.ts",
+  "./src/userCollection.ts",
+  "./src/usuario.ts",
+],
+  "out": "./docs"
+}
