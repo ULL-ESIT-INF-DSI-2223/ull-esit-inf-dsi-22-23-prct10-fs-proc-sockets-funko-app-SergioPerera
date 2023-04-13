@@ -12,18 +12,13 @@ title: "Documentación de la práctica 10: Ejercicios de programación"
   - [Ejercicio 1](#ejercicio-1)
     - [Enunciado](#enunciado)
     - [Resolución](#resolucion)
-      - [Documentary](#documentaryts)
-      - [Interfaces](#interfacests)
-      - [Movie](#moviets)
-      - [Serie](#seriets)
-      - [Streamable](#streamablets)
   - [Ejercicio 2](#ejercicio-2)
     - [Enunciado](#enunciado-1)
     - [Resolución](#resolucion-1)
   - [Ejercicio 3](#ejercicio-3)
     - [Enunciado](#enunciado-2)
     - [Resolución](#resolucion-2)
-  - [Ejercicio 1 clase](#ejercicio-1-clase)
+  - [Ejercicios clase](#ejercicios-clase)
 - [Conclusiones](#conclusiones)
 
 # Introducción
@@ -326,3 +321,151 @@ Los requisitos que debe cumplir la aplicación son los enumerados a continuació
   - Cargar cada Funko Pop desde los diferentes ficheros con formato JSON almacenados en el directorio del usuario correspondiente.
 
 1. Un usuario solo podrá interactuar con la aplicación de a través de la interfaz de línea de comandos del cliente. Los diferentes comandos, opciones de los mismos, así como manejadores asociados a cada uno de ellos deben gestionarse mediante el uso del paquete yargs.
+
+### Resolución
+
+#### Servidor
+#### Cliente
+
+## Ejercicios clase
+### Resolución 
+#### Cliente
+```typescript
+import net from 'net';
+
+export function cliente(callback: (err: string | undefined, data: string | undefined) => void) {
+
+  // Comprobamos que se ha introducido un comando
+  if (process.argv.length < 3) {
+    const errorMsg = "Error: No se ha introducido ningun comando";
+    // console.log(errorMsg);
+    return callback(errorMsg, undefined);
+  }
+
+  /**
+   * Creamos y conectamos el cliente
+   */
+  const client = net.connect({ port: 8100 });
+
+  /**
+   * Cuando se conecta el cliente, enviamos un mensaje al servidor
+   */
+  client.on('connect', () => {
+    // Ahora mandamos al servidor el comando y el parametro
+    client.write(JSON.stringify({ 'type': 'command', 'com': process.argv[2], 'param': process.argv[3] }));
+  });
+
+  /**
+   * Cuando recibimos datos del servidor, los pasamos al callback
+   */
+  client.on('data', (data) => {
+    const response = data.toString();
+    client.end();
+    return callback(undefined, response);
+  });
+
+  /**
+   * Cuando se cierra la conexion, mostramos un mensaje por pantalla y pasamos el mensaje al callback
+   */
+  client.on('close', () => {
+    const successMsg = "Cliente desconectado";
+    // console.log(successMsg);
+    return callback(undefined, successMsg);
+  });
+
+}
+
+// Generamos una función que albergue los comandos y a la que le pasamos los argumentos
+export function comandos() {
+  let incomandos = process.argv[2];
+  let inparametros = process.argv[3];
+
+  // Creamos un array con los comandos ls y pwd
+  let comandos = ['ls', 'pwd'];
+  // Creamos un array con los parametros de ls
+  let parametros_ls = ['-l', '-a'];
+  // Creamos un array con los parametros de pwd
+  let parametros_pwd = [''];
+
+  // Comprueba que el comando introducido es ls o pwd
+  if (!comandos.includes(incomandos)) {
+    if(!parametros_ls.includes(inparametros) || !parametros_pwd.includes(inparametros)) {
+      console.log('Error: No se ha introducido ningun comando');
+      return('Error: No se ha introducido ningun comando');
+    }
+  }
+}
+
+// Llamamos a la función cliente y pasamos un callback para manejar la respuesta
+cliente((err, data) => {
+  if (err) {
+    console.log(err);
+  } else if (data) {
+    console.log(data);
+  }
+});
+```
+Se ha implementado un cliente que se conecta al servidor y envía un mensaje con el comando y el parámetro introducido por el usuario. El servidor recibe el mensaje y lo procesa. El servidor devuelve un mensaje al cliente con la respuesta del comando. El cliente recibe el mensaje y lo muestra por pantalla.
+
+Cabe destarcar que sigue una estructura de callbacks anidados. Esto es debido a que el cliente se conecta al servidor y envía un mensaje. El servidor recibe el mensaje y lo procesa. El servidor devuelve un mensaje al cliente con la respuesta del comando. El cliente recibe el mensaje y lo muestra por pantalla. Por lo tanto, el cliente tiene que esperar a que el servidor le devuelva el mensaje para poder mostrarlo por pantalla.
+#### Servidor
+```typescript
+import net from 'net';
+import { spawn } from 'child_process';
+
+export function servidor(callback: (msg: string) => void) {
+  let returned_msg: string = "";
+  
+  /**
+   * Generamos el servidor
+   */
+  net.createServer((connection) => {
+    /// Cuando se conecta un cliente, mostramos un mensaje por pantalla
+    connection.on('data', (data) => {
+      /// Parseamos el mensaje recibido
+      let mensaje = JSON.parse(data.toString());
+  
+      /// Si el mensaje es un comando, lo ejecutamos
+      if(mensaje.type == 'command') {
+        console.log("Se ejecutara el comando: " + mensaje.com + " " + mensaje.param);
+        let salida;
+        /// Si no se ha introducido un parametro, ejecutamos el comando sin parametro
+        if(mensaje.param == undefined) {
+          salida = spawn(mensaje.com);
+        } else {
+          salida = spawn(mensaje.com, [mensaje.param]);
+        }
+  
+        /// Cuando se recibe la salida del comando, la enviamos al cliente
+        salida.stderr.on('data', (data) => {
+          connection.write(data.toString());
+        });
+  
+        /// Cuando se recibe la salida del comando, la enviamos al cliente
+        salida.stdout.on('data', (data) => {
+          connection.write(data.toString());
+        });
+      }
+    });
+  
+    /// Cuando se cierra la conexion, mostramos un mensaje por pantalla
+    connection.on('close' , () => {
+      // console.log('Cliente desconectado');
+      returned_msg = "Cliente desconectado";
+      callback(returned_msg);
+    });
+    
+  }).listen(8100, () => {
+      // console.log('Servidor escuchando en el puerto 8100');
+      returned_msg = "Servidor escuchando en el puerto 8100";
+      callback(returned_msg);
+    });
+}
+
+servidor((msg) => {
+  console.log(msg);
+});
+```
+Se ha implementado un servidor que se conecta al cliente y recibe un mensaje con el comando y el parámetro introducido por el usuario. El servidor recibe el mensaje y lo procesa. El servidor devuelve un mensaje al cliente con la respuesta del comando. El cliente recibe el mensaje y lo muestra por pantalla.
+
+## Conclusiones
