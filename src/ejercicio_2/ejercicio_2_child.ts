@@ -43,10 +43,10 @@ exec(`wc ${filePath}`, (error, stdout, stderr) => {
         process.exit(1);
     }
 
-    // Obtenemos las estadísticas de wc
+    // Obtenemos los valores de wc
     const [lines, words, characters] = stdout.trim().split(/\s+/);
 
-    // Mostramos las estadísticas requeridas
+    // Mostramos los valores requeridas
     if (argv.lines) {
         console.log(`Número de líneas: ${lines}`);
     }

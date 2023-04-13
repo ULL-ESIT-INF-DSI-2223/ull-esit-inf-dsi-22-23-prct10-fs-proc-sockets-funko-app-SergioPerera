@@ -215,4 +215,114 @@ Si se le pasa un fichero que no existe se muestra un mensaje de error y se sale 
 
 #### Sin hacer uso del método pipe
 ```typescript
+import * as fs from 'fs';
+import { exec } from 'child_process';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
+// Configuramos los argumentos de línea de comandos
+const argv = yargs(hideBin(process.argv))
+    .option('lines', {
+        alias: 'l',
+        describe: 'Mostrar número de líneas',
+        type: 'boolean'
+    })
+    .option('words', {
+        alias: 'w',
+        describe: 'Mostrar número de palabras',
+        type: 'boolean'
+    })
+    .option('characters', {
+        alias: 'c',
+        describe: 'Mostrar número de caracteres',
+        type: 'boolean'
+    })
+    .demandOption(['lines', 'words', 'characters'], 'Debe especificar una opción')
+    .strict(false)
+    .argv as any; // especificamos el tipo como any para evitar errores de tipo
+
+const filePath = argv._[0];
+
+// Verificamos que el archivo exista
+if (!fs.existsSync(filePath)) {
+    console.error(`El archivo ${filePath} no existe`);
+    process.exit(1);
+}
+
+// Ejecutamos el comando wc
+exec(`wc ${filePath}`, (error, stdout, stderr) => {
+    if (error) {
+        console.error(`Error al ejecutar el comando: ${error.message}`);
+        process.exit(1);
+    }
+    if (stderr) {
+        console.error(`Error al ejecutar el comando: ${stderr}`);
+        process.exit(1);
+    }
+
+    // Obtenemos los valores de wc
+    const [lines, words, characters] = stdout.trim().split(/\s+/);
+
+    // Mostramos los valores requeridas
+    if (argv.lines) {
+        console.log(`Número de líneas: ${lines}`);
+    }
+    if (argv.words) {
+        console.log(`Número de palabras: ${words}`);
+    }
+    if (argv.characters) {
+        console.log(`Número de caracteres: ${characters}`);
+    }
+});
+```
+Lo primero que hacemos es configurar los argumentos de línea de comandos con yargs. En este caso, se especifica que al menos una de las opciones debe estar presente. También se especifica que no se debe mostrar un mensaje de error si se pasa un argumento que no está especificado en la configuración de yargs.
+
+La configuración del yargs en igual a la del ejercicio anterior, pero en este caso se especifica el tipo como any para evitar errores de tipo.
+
+Luego hacemos uso del comando ``` exec ``` en vez de ``` spawn ``` para manejar mejor los errores. Si se produce un error, se muestra un mensaje de error y se sale del programa. Si se produce un error en la ejecución del comando, se muestra un mensaje de error y se sale del programa.
+
+Luego se obtienen los valores de wc y se muestran los valores requeridos.
+
+## Ejercicio 3
+### Enunciado
+En este ejercicio tendrá que partir de la implementación de la aplicación de registro de Funko Pops que llevó a cabo en la Práctica 9 para escribir un servidor y un cliente haciendo uso de los sockets proporcionados por el módulo net de Node.js. Las operaciones que podrá solicitar el cliente al servidor deberán ser las mismas que ya implementó durante la Práctica 9, esto es, añadir, modificar, eliminar, listar y mostrar Funko Pops de un usuario concreto. Un usuario interactuará con el cliente de la aplicación, exclusivamente, a través de la línea de comandos. Al mismo tiempo, en el servidor, la información de los Funko Pops se almacenará en ficheros JSON en el sistema de ficheros, siguiendo la misma estructura de directorios utilizada durante la Práctica 9.
+Descripción de los requisitos de la aplicación de registro de Funko Pops
+Los requisitos que debe cumplir la aplicación son los enumerados a continuación:
+
+1. La aplicación deberá permitir que múltiples usuarios interactúen con ella.
+
+2. En concreto, un Funko vendrá descrito por los siguientes elementos mínimos de información que deberán ser almacenados:
+
+    - ID. Debe ser un identificador único del Funko.
+    - Nombre. Debe ser una cadena de caracteres.
+    - Descripción. Debe ser una cadena de caracteres.
+    - Tipo. Debe ser un enumerado con valores como, por ejemplo, Pop!, Pop! Rides, Vynil Soda o Vynil Gold, entre otros.
+    - Género. Debe ser un enumerado con valores como, por ejemplo, Animación, Películas y TV, Videojuegos, Deportes, Música o Ánime, entre otras.
+    - Franquicia. Debe ser una cadena de caracteres como, por ejemplo, The Big Bang Theory, Game of Thrones, Sonic The Hedgehog o Marvel: Guardians of the - Galaxy, entre otras.
+    - Número. Debe ser el número identificativo del Funko dentro de la franquicia correspondiente.
+    - Exclusivo. Debe ser un valor booleano, esto es, verdadero en el caso de que el Funko sea exclusivo o falso en caso contrario.
+    - Características especiales. Debe ser una cadena de caracteres que indique las característica especiales del Funko como, por ejemplo, si brilla en la oscuridad o si su cabeza balancea.
+    - Valor de mercado. Debe ser un valor numérico positivo.
+
+
+3. Cada usuario tendrá su propia lista de Funko Pops, con la que podrá llevar a cabo las siguientes operaciones:
+
+    - Añadir un Funko a la lista. Antes de añadir un Funko a la lista se debe comprobar si ya existe un Funko con el mismo ID. En caso de que así fuera, deberá mostrarse un mensaje de error por la consola. En caso contrario, se añadirá el nuevo Funko a la lista y se mostrará un mensaje informativo por la consola.
+    
+    - Modificar un Funko de la lista. Antes de modificar un Funko, previamente se debe comprobar si ya existe un Funko con el ID del Funko a modificar en la lista. Si existe, se procede a su modificación y se emite un mensaje informativo por la consola. En caso contrario, debe mostrarse un mensaje de error por la consola.
+    
+    - Eliminar un Funko de la lista. Antes de eliminar un Funko, previamente se debe comprobar si existe un Funko con el ID del Funko a eliminar en la lista. Si existe, se procede a su eliminación y se emite un mensaje informativo por la consola. En caso contrario, debe mostrarse un mensaje de error por la consola.
+    
+    - Listar los Funkos existentes en una lista. En este caso, deberá mostrarse la información asociada a cada Funko existente en la lista por la consola. Además, deberá utilizar el paquete chalk para ello. Primero, deberá establecer rangos de valor de mercado. Luego, el valor de mercado de cada Funko deberá mostrarse con colores diferentes. Por ejemplo, para aquellos Funko con un valor de mercado elevado, dicho valor deberá mostrarse en color verde, mientras que para los de menor valor de mercado, dicho valor se mostrará con color rojo. Establezca, al menos, cuatro rangos de valor de mercado diferentes.
+    
+    - Mostrar la información de un Funko concreto existente en la lista. Antes de mostrar la información del Funko, se debe comprobar que en la lista existe un Funko cuyo ID sea el del Funko a mostrar. Si existe, se mostrará toda su información, incluyendo el color de su valor de mercado. Para ello, use el paquete chalk. En caso contrario, se mostrará un mensaje de error por la consola.
+
+- Todos los mensajes informativos se mostrarán con color verde, mientras que los mensajes de error se mostrarán con color rojo. Use el paquete chalk para ello.
+
+- El servidor es responsable de hacer persistente la lista de Funko Pops de cada usuario:
+
+  - Guardar cada Funko Pop de la lista en un fichero con formato JSON. Los ficheros JSON correspondientes a los Funko Pops de un usuario concreto deberán almacenarse en un directorio con el nombre de dicho usuario.
+  
+  - Cargar cada Funko Pop desde los diferentes ficheros con formato JSON almacenados en el directorio del usuario correspondiente.
+
+1. Un usuario solo podrá interactuar con la aplicación de a través de la interfaz de línea de comandos del cliente. Los diferentes comandos, opciones de los mismos, así como manejadores asociados a cada uno de ellos deben gestionarse mediante el uso del paquete yargs.
