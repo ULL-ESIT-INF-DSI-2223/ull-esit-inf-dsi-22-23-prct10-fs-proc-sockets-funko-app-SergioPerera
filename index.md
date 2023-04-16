@@ -469,3 +469,4 @@ servidor((msg) => {
 Se ha implementado un servidor que se conecta al cliente y recibe un mensaje con el comando y el parámetro introducido por el usuario. El servidor recibe el mensaje y lo procesa. El servidor devuelve un mensaje al cliente con la respuesta del comando. El cliente recibe el mensaje y lo muestra por pantalla.
 
 ## Conclusiones
+En esta práctica se ha aprendido a usar las distintas fucionalidades asíncronas de Node.js. Se ha aprendido a usar el paquete yargs para manejar los comandos introducidos por el usuario. Se ha aprendido a usar el paquete net para crear un servidor y un cliente. Se ha aprendido a usar el paquete child_process para ejecutar comandos en el sistema operativo.
